@@ -48,7 +48,7 @@ Trên các sàn giao dịch trực tuyến ngang hàng (P2P classifieds), sự b
 | **Quy mô dữ liệu** | 7.208 tin đăng thô ban đầu; 6.544 bản ghi sau khi làm sạch và loại bỏ ngoại lai bằng IQR. |
 | **Phương pháp chính** | Hồi quy có giám sát (Supervised Regression) định giá; Phát hiện dị biệt không giám sát (LOF) và Z-score phần dư để lọc bất thường. |
 | **Mô hình cốt lõi** | Scikit-Learn Random Forest Regressor, PySpark MLlib Random Forest, Local Outlier Factor (LOF), TF-IDF (3.000 đặc trưng). |
-| **Chỉ số thực nghiệm** | Tập kiểm thử đạt $R^2 = 0.890$, $\text{MAE} \approx 3.69\text{ triệu VND}$, $\text{RMSE} \approx 4.89\text{ triệu VND}$ (kèm lưu ý kiểm toán rò rỉ nhãn). |
+| **Chỉ số thực nghiệm** | Tập kiểm thử đạt $R^2 = 0.890$, $\\mathrm{MAE} \\approx 3.69$ triệu VND, $\\mathrm{RMSE} \\approx 4.89$ triệu VND (kèm lưu ý kiểm toán rò rỉ nhãn). |
 | **Sản phẩm bàn giao** | Jupyter Notebook nghiên cứu, module suy luận độc lập (`price_pipeline_module.py`) và ứng dụng Streamlit (`app.py`). |
 
 ---
@@ -176,12 +176,12 @@ Nội dung mô tả tin đăng thường chứa nhiều từ viết tắt, số 
 
 ### Lọc ngoại lai giá bán bằng IQR
 Biến mục tiêu `Giá` trong tập dữ liệu thô bị lệch phải nghiêm trọng bởi các tin đăng đùa cợt (ví dụ: 9.999.999.999 VND) và các dòng mô tô phân khối lớn sưu tầm:
-- Tứ phân vị thứ nhất ($Q1$): $13.500.000\text{ VND}$
-- Tứ phân vị thứ ba ($Q3$): $30.500.000\text{ VND}$
-- Khoảng tứ phân vị ($\text{IQR}$): $17.000.000\text{ VND}$
-- Ngưỡng xác định ngoại lai: $[Q1 - 1.5 \times \text{IQR}, Q3 + 1.5 \times \text{IQR}] = [-12.000.000\text{ VND}, 56.000.000\text{ VND}]$
+- Tứ phân vị thứ nhất ($Q1$): 13.500.000 VND
+- Tứ phân vị thứ ba ($Q3$): 30.500.000 VND
+- Khoảng tứ phân vị ($\mathrm{IQR}$): 17.000.000 VND
+- Ngưỡng xác định ngoại lai: $[Q1 - 1.5 \times \mathrm{IQR}, Q3 + 1.5 \times \mathrm{IQR}] = [-12.000.000, 56.000.000]\text{ VND}$
 
-Ngưỡng dưới được gán chặn tại mức giá hợp lý lớn hơn 0 ($0\text{ VND}$), trong khi các tin đăng có giá vượt quá $56.000.000\text{ VND}$ được loại khỏi tập huấn luyện hồi quy chính. Bước xử lý này đưa kích thước dữ liệu từ 7.208 về **6.544 dòng**, giúp mô hình học tập trung vào phân khúc xe máy thông dụng. Toàn bộ đồ thị phân phối trực quan và phân tích chuyên sâu cho từng biến trước và sau khi làm sạch được trình bày chi tiết tại Mục 7.
+Ngưỡng dưới được gán chặn tại mức giá hợp lý lớn hơn 0 (0 VND), trong khi các tin đăng có giá vượt quá 56.000.000 VND được loại khỏi tập huấn luyện hồi quy chính. Bước xử lý này đưa kích thước dữ liệu từ 7.208 về **6.544 dòng**, giúp mô hình học tập trung vào phân khúc xe máy thông dụng. Toàn bộ đồ thị phân phối trực quan và phân tích chuyên sâu cho từng biến trước và sau khi làm sạch được trình bày chi tiết tại Mục 7.
 
 ---
 
@@ -197,11 +197,11 @@ Quá trình phân tích dữ liệu khám phá (EDA) được thực hiện đa 
 - **B. Phương pháp**: Kết hợp biểu đồ tần số (Histogram) cùng đường ước lượng mật độ hạt nhân (KDE) và biểu đồ hộp (Boxplot) trên thang đo tuyến tính gốc lẫn thang logarit tự nhiên ($\log(1 + y)$).
 - **C. Kết quả quan sát**:
   - Phân phối giá thô bị lệch phải nghiêm trọng với hệ số lệch dương rất lớn ($> 4.5$).
-  - Giá trị trung bình (~$49.2\text{ triệu VND}$) cao gấp gần ba lần so với giá trị trung vị (~$16.5\text{ triệu VND}$), phản ánh sức kéo cực lớn từ các tin rao tiền trăm triệu hoặc tiền tỷ (tin ảo đùa cợt hoặc siêu mô tô) trong dữ liệu thô.
-  - $50\%$ số tin đăng tập trung dày đặc trong khoảng giá từ $Q1 = 13.5\text{ triệu VND}$ đến $Q3 = 30.5\text{ triệu VND}$.
-  - Phép biến đổi logarit tự nhiên ($\log(1 + \text{Giá})$) nén chặt đuôi dài bên phải, đưa phân phối về dạng hình chuông gần chuẩn đối xứng với giá trị trung bình $\approx 16.60$ và độ lệch chuẩn $\approx 0.65$.
+  - Giá trị trung bình (~49.2 triệu VND) cao gấp gần ba lần so với giá trị trung vị (~16.5 triệu VND), phản ánh sức kéo cực lớn từ các tin rao tiền trăm triệu hoặc tiền tỷ (tin ảo đùa cợt hoặc siêu mô tô) trong dữ liệu thô.
+  - 50% số tin đăng tập trung dày đặc trong khoảng giá từ $Q1 = 13.5$ triệu VND đến $Q3 = 30.5$ triệu VND.
+  - Phép biến đổi logarit tự nhiên ($\log(1 + y)$ (với $y$ là Giá bán)) nén chặt đuôi dài bên phải, đưa phân phối về dạng hình chuông gần chuẩn đối xứng với giá trị trung bình $\approx 16.60$ và độ lệch chuẩn $\approx 0.65$.
 - **D. Nhận xét**: Thị trường xe máy cũ tại TP.HCM chủ yếu phục vụ nhu cầu đi lại bình dân của người lao động và học sinh, sinh viên với ngân sách dưới 30 triệu đồng. Các mức giá bất thường hàng trăm triệu hoặc hàng tỷ đồng chủ yếu là xe mô tô sưu tầm hiếm gặp hoặc tin đăng ảo của người dùng thử nghiệm nền tảng.
-- **E. Liên hệ với mô hình**: Hiện tượng lệch phải và đuôi dày khiến các hàm mất mát dạng sai số bình phương (MSE/RMSE) bị kéo lệch trọng số về phía các ngoại lai đắt tiền, làm giảm độ chính xác ở phân khúc xe phổ thông. Phát hiện này củng cố hai quyết định kỹ thuật: (1) lọc bỏ các tin đăng trên $56\text{ triệu VND}$ bằng IQR để huấn luyện mô hình cốt lõi, và (2) ưu tiên các mô hình cây quyết định (Tree Ensemble) ít bị ảnh hưởng bởi tỷ lệ co giãn đơn điệu của biến mục tiêu.
+- **E. Liên hệ với mô hình**: Hiện tượng lệch phải và đuôi dày khiến các hàm mất mát dạng sai số bình phương (MSE/RMSE) bị kéo lệch trọng số về phía các ngoại lai đắt tiền, làm giảm độ chính xác ở phân khúc xe phổ thông. Phát hiện này củng cố hai quyết định kỹ thuật: (1) lọc bỏ các tin đăng trên 56 triệu VND bằng IQR để huấn luyện mô hình cốt lõi, và (2) ưu tiên các mô hình cây quyết định (Tree Ensemble) ít bị ảnh hưởng bởi tỷ lệ co giãn đơn điệu của biến mục tiêu.
 
 ### 7.2 Phân phối số km đã đi
 
@@ -210,22 +210,30 @@ Quá trình phân tích dữ liệu khám phá (EDA) được thực hiện đa 
 - **A. Mục đích phân tích**: Đánh giá cường độ sử dụng phương tiện thực tế, phát hiện các giá trị số km ảo/mặc định và xác định mối quan hệ hao mòn cơ học.
 - **B. Phương pháp**: Phân tích phân phối liên tục, xác định ngưỡng ngoại lai bằng biểu đồ hộp và phân tầng dữ liệu theo quãng đường tích lũy.
 - **C. Kết quả quan sát**:
-  - Giá trị trung vị đạt $28.000\text{ km}$, với $Q1 = 10.000\text{ km}$ và $Q3 = 53.400\text{ km}$ ($\text{IQR} = 43.400\text{ km}$).
-  - Xuất hiện các đỉnh nhọn bất thường tại các giá trị tròn hoặc mặc định do người dùng nhập ẩu như $0\text{ km}$, $99.999\text{ km}$, $999.999\text{ km}$.
-  - Dữ liệu hình thành ba phân tầng sử dụng rõ rệt: "Xe lướt / Mới" ($< 10.000\text{ km}$), "Sử dụng phổ thông" ($10.000 - 50.000\text{ km}$), và "Chạy dịch vụ / Hao mòn lớn" ($> 50.000\text{ km}$).
-- **D. Nhận xét**: Người bán thường không nhớ chính xác số công-tơ-mét hoặc xe bị hỏng đồng hồ nên có xu hướng gõ các số tượng trưng hoặc để mặc định. Trong thực tế đô thị Việt Nam, một chiếc xe máy vận hành trung bình từ $6.000 - 10.000\text{ km/năm}$. Mốc trên $50.000\text{ km}$ thể hiện xe đã qua nhiều năm sử dụng hoặc từng chạy xe ôm công nghệ/giao hàng liên tục.
-- **E. Liên hệ với mô hình**: Số km đơn lẻ dễ gây nhiễu nếu đứng độc lập (ví dụ xe 10 năm tuổi nhưng chỉ ghi 5.000 km là dấu hiệu tua đồng hồ hoặc nhập sai). Do đó, dự án đã giới hạn trần ngoại lai giả lập ($> 200.000\text{ km}$) và tạo đặc trưng phái sinh đo tốc độ bào mòn: $\text{Km\_per\_year} = \frac{\text{Số\_km\_đã\_đi}}{\max(\text{Tuổi\_xe}, 1)}$.
+  - Giá trị trung vị đạt 28.000 km, với $Q1 = 10.000\text{ km}$ và $Q3 = 53.400\text{ km}$ ($\mathrm{IQR} = 43.400\text{ km}$).
+  - Xuất hiện các đỉnh nhọn bất thường tại các giá trị tròn hoặc mặc định do người dùng nhập ẩu như 0 km, 99.999 km, 999.999 km.
+  - Dữ liệu hình thành ba phân tầng sử dụng rõ rệt: "Xe lướt / Mới" ($< 10.000 km$), "Sử dụng phổ thông" ($10.000 - 50.000 km$), và "Chạy dịch vụ / Hao mòn lớn" ($> 50.000 km$).
+- **D. Nhận xét**: Người bán thường không nhớ chính xác số công-tơ-mét hoặc xe bị hỏng đồng hồ nên có xu hướng gõ các số tượng trưng hoặc để mặc định. Trong thực tế đô thị Việt Nam, một chiếc xe máy vận hành trung bình từ 6.000 - 10.000 km/năm. Mốc trên $50.000 km$ thể hiện xe đã qua nhiều năm sử dụng hoặc từng chạy xe ôm công nghệ/giao hàng liên tục.
+- **E. Liên hệ với mô hình**: Số km đơn lẻ dễ gây nhiễu nếu đứng độc lập (ví dụ xe 10 năm tuổi nhưng chỉ ghi 5.000 km là dấu hiệu tua đồng hồ hoặc nhập sai). Do đó, dự án đã giới hạn trần ngoại lai giả lập (> 200.000 km) và tạo đặc trưng phái sinh đo tốc độ bào mòn:
+
+$$\mathrm{KmPerYear} = \frac{\mathrm{Mileage}}{\max(\mathrm{VehicleAge}, 1)}$$
+
+Trong đó $\mathrm{Mileage}$ là số km đã đi (`Số_Km_đã_đi`), và $\mathrm{VehicleAge}$ là tuổi xe (`Tuổi_xe`).
 
 ### 7.3 Năm đăng ký và tuổi phương tiện
 
 ![Registration Year Distribution](images/num_plot_3.png)
 
 - **A. Mục đích phân tích**: Khảo sát cơ cấu vòng đời xe đang lưu thông trên sàn giao dịch và xác định quy luật khấu hao giá trị theo thời gian.
-- **B. Phương pháp**: Phân tích tần số rời rạc theo năm và chuyển đổi phi tuyến sang độ tuổi phương tiện ($\text{Tuổi\_xe} = 2025 - \text{Năm\_đăng\_ký}$).
+- **B. Phương pháp**: Phân tích tần số rời rạc theo năm và chuyển đổi phi tuyến sang độ tuổi phương tiện:
+
+$$\mathrm{VehicleAge} = 2025 - \mathrm{RegistrationYear}$$
+
+Trong đó $\mathrm{RegistrationYear}$ là năm đăng ký (`Năm_đăng_ký`) của phương tiện.
 - **C. Kết quả quan sát**:
   - Đại đa số tin đăng tập trung vào các dòng xe đăng ký trong giai đoạn 2010 đến 2020, đạt đỉnh lớn trong khoảng 2015 - 2018 (năm đăng ký trung vị là 2015, tương ứng với tuổi đời trung bình ~10 năm so với mốc khảo sát 2025).
-  - Tỷ lệ xe đăng ký trước năm 2005 chiếm dưới $3\%$ tổng mẫu, chủ yếu là các mẫu xe hoài niệm (Honda Super Cub, Dream Thái) hoặc xe quá niên hạn.
-- **D. Nhận xét**: Xe máy tại Việt Nam có chu kỳ sử dụng và chuyển nhượng mạnh nhất trong khoảng 5 đến 10 năm đầu. Tốc độ khấu hao diễn ra rất nhanh trong 1 đến 3 năm đầu tiên (mất giá $15\% - 25\%$ mỗi năm), sau đó chậm lại và ổn định từ năm thứ 5 trở đi khi giá trị xe chủ yếu phụ thuộc vào tình trạng vận hành thực tế.
+  - Tỷ lệ xe đăng ký trước năm 2005 chiếm dưới 3% tổng mẫu, chủ yếu là các mẫu xe hoài niệm (Honda Super Cub, Dream Thái) hoặc xe quá niên hạn.
+- **D. Nhận xét**: Xe máy tại Việt Nam có chu kỳ sử dụng và chuyển nhượng mạnh nhất trong khoảng 5 đến 10 năm đầu. Tốc độ khấu hao diễn ra rất nhanh trong 1 đến 3 năm đầu tiên (mất giá 15% - 25% mỗi năm), sau đó chậm lại và ổn định từ năm thứ 5 trở đi khi giá trị xe chủ yếu phụ thuộc vào tình trạng vận hành thực tế.
 - **E. Liên hệ với mô hình**: Việc chuyển đổi `Năm_đăng_ký` thành `Tuổi_xe` giúp mô hình phản ánh trực tiếp quy luật khấu hao. Do đường cong khấu hao thực tế mang tính lồi phi tuyến chứ không phải đường thẳng cố định, các mô hình hồi quy tuyến tính bị sai lệch đáng kể, trong khi mô hình cây dễ dàng học được các điểm ngưỡng phân nhánh theo từng mốc tuổi quan trọng.
 
 ### 7.4 Phân khúc dung tích xi-lanh
@@ -236,11 +244,11 @@ Quá trình phân tích dữ liệu khám phá (EDA) được thực hiện đa 
 - **A. Mục đích phân tích**: Đánh giá thị phần giao dịch và sự phân hóa mức giá giữa các khung dung tích xi-lanh theo quy định phân hạng giấy phép lái xe tại Việt Nam.
 - **B. Phương pháp**: Thống kê tần suất danh mục kết hợp biểu đồ hộp so sánh phân phối giá theo từng nhóm dung tích (`<50cc`, `50 - 100cc`, `100 - 175cc`, `>175cc`).
 - **C. Kết quả quan sát**:
-  - `100 - 175cc`: Chiếm tỷ trọng áp đảo toàn diện với **$5.852\text{ tin đăng}$ ($81.2\%$ toàn bộ dữ liệu)**; mức giá trung vị đạt **$17.5\text{ triệu VND}$** (khoảng IQR: $12.5\text{M} - 28.5\text{M VND}$).
-  - `50 - 100cc`: Gồm $686\text{ tin đăng}$ ($9.5\%$), giá trung vị **$8.5\text{ triệu VND}$**, đại diện cho các dòng xe số dung tích nhỏ truyền thống.
-  - `Dưới 50cc`: Gồm $285\text{ tin đăng}$ ($4.0\%$), giá trung vị **$9.8\text{ triệu VND}$**, hướng tới đối tượng học sinh chưa có bằng lái.
-  - `Trên 175cc`: Gồm $314\text{ tin đăng}$ ($4.4\%$), nhưng giá trung vị vọt lên **$102.5\text{ triệu VND}$** và giá trung bình đạt tới **$554.4\text{ triệu VND}$**, biên độ dao động cực rộng từ vài chục triệu đến hàng tỷ đồng.
-- **D. Nhận xét**: Khung $100 - 175\text{cc}$ tương ứng hoàn hảo với giấy phép lái xe hạng A1 – phân hạng phương tiện thông dụng nhất tại Việt Nam (Honda Wave, Vision, Air Blade, Lead, SH 125/150). Nhóm `>175cc` đòi hỏi bằng A2, chủ yếu phục vụ thú chơi phân khối lớn, xe nhập khẩu chịu thuế tiêu thụ đặc biệt cao nên mặt bằng giá tách biệt hoàn toàn.
+  - `100 - 175cc`: Chiếm tỷ trọng áp đảo toàn diện với **5.852 tin đăng (81.2% toàn bộ dữ liệu)**; mức giá trung vị đạt **17.5 triệu VND** (khoảng IQR: 12.5M - 28.5M VND).
+  - `50 - 100cc`: Gồm 686 tin đăng (9.5%), giá trung vị **8.5 triệu VND**, đại diện cho các dòng xe số dung tích nhỏ truyền thống.
+  - `Dưới 50cc`: Gồm 285 tin đăng (4.0%), giá trung vị **9.8 triệu VND**, hướng tới đối tượng học sinh chưa có bằng lái.
+  - `Trên 175cc`: Gồm 314 tin đăng (4.4%), nhưng giá trung vị vọt lên **102.5 triệu VND** và giá trung bình đạt tới **554.4 triệu VND**, biên độ dao động cực rộng từ vài chục triệu đến hàng tỷ đồng.
+- **D. Nhận xét**: Khung 100 - 175cc tương ứng hoàn hảo với giấy phép lái xe hạng A1 – phân hạng phương tiện thông dụng nhất tại Việt Nam (Honda Wave, Vision, Air Blade, Lead, SH 125/150). Nhóm `>175cc` đòi hỏi bằng A2, chủ yếu phục vụ thú chơi phân khối lớn, xe nhập khẩu chịu thuế tiêu thụ đặc biệt cao nên mặt bằng giá tách biệt hoàn toàn.
 - **E. Liên hệ với mô hình**: Dung tích xe đóng vai trò như một ranh giới phân tách cấu trúc thị trường. Vì phân khúc `>175cc` có phương sai giá gấp nhiều lần phần còn lại, việc kết hợp mã hóa danh mục và tương tác giữa thương hiệu với dung tích giúp thuật toán cây phân nhánh chính xác mà không làm nhiễu vùng giá xe thông dụng.
 
 ### 7.5 Mức giá trung bình theo thương hiệu
@@ -250,8 +258,8 @@ Quá trình phân tích dữ liệu khám phá (EDA) được thực hiện đa 
 - **A. Mục đích phân tích**: Định lượng giá trị thương hiệu và xác định khoảng chênh lệch giá giữa các thương hiệu mô tô cao cấp nhập khẩu so với các hãng xe phổ thông nội địa.
 - **B. Phương pháp**: Gom nhóm dữ liệu (Group-by aggregation) tính toán giá trị trung bình (mean) và trung vị (median), đối chiếu với quy mô số lượng tin đăng mẫu.
 - **C. Kết quả quan sát**:
-  - Các thương hiệu mô tô phân khối lớn nhập khẩu có giá trung bình cao vượt trội: Harley-Davidson đạt **$358.7\text{ triệu VND}$** ($n=13$), BMW đạt **$324.7\text{ triệu VND}$** ($n=10$), Triumph đạt **$229.1\text{ triệu VND}$** ($n=9$) và Ducati đạt **$152.2\text{ triệu VND}$** ($n=16$).
-  - Các thương hiệu xe phổ thông chiếm hơn $85\%$ thị phần giao dịch: Honda dẫn đầu tuyệt đối với $n=4.372$ tin (trung vị **$19.0\text{ triệu VND}$**, trung bình $63.8\text{ triệu VND}$ do kéo bởi các dòng SH Ý/CBR), Yamaha ($n=1.720$ tin, trung vị **$18.2\text{ triệu VND}$**) và Piaggio ($n=380$ tin, trung vị **$25.0\text{ triệu VND}$**, trung bình $33.1\text{ triệu VND}$).
+  - Các thương hiệu mô tô phân khối lớn nhập khẩu có giá trung bình cao vượt trội: Harley-Davidson đạt **358.7 triệu VND** ($n=13$), BMW đạt **324.7 triệu VND** ($n=10$), Triumph đạt **229.1 triệu VND** ($n=9$) và Ducati đạt **152.2 triệu VND** ($n=16$).
+  - Các thương hiệu xe phổ thông chiếm hơn 85% thị phần giao dịch: Honda dẫn đầu tuyệt đối với $n=4.372$ tin (trung vị **19.0 triệu VND**, trung bình 63.8 triệu VND do kéo bởi các dòng SH Ý/CBR), Yamaha ($n=1.720$ tin, trung vị **18.2 triệu VND**) và Piaggio ($n=380$ tin, trung vị **25.0 triệu VND**, trung bình 33.1 triệu VND).
 - **D. Nhận xét**: Thị trường bị chia tách rõ rệt: xe phổ thông (Honda, Yamaha) có tính thanh khoản cao, giữ giá ổn định; trong khi các thương hiệu mô tô hạng sang (Harley-Davidson, BMW, Ducati) có số lượng giao dịch ít ($n \le 16$), mang tính cá nhân hóa và chịu tác động lớn từ thuế nhập khẩu. Piaggio định vị rõ nét ở phân khúc cận cao cấp trong nhóm xe tay ga thời trang.
 - **E. Liên hệ với mô hình**: `Thương_hiệu` là một trong những đặc trưng có độ quan trọng cao nhất. Tuy nhiên, sự mất cân bằng mẫu nghiêm trọng giữa các hãng phổ thông ($n > 4.000$) và hãng siêu sang ($n < 20$) khiến mô hình tuyến tính dễ bị suy biến trọng số. Mô hình cây giải quyết tốt sự phân nhánh này, đồng thời việc trích xuất khung giá tham chiếu (`Khoảng_giá_min`, `Khoảng_giá_max`) giúp khóa chặt biên độ giá theo từng hãng.
 
@@ -262,9 +270,9 @@ Quá trình phân tích dữ liệu khám phá (EDA) được thực hiện đa 
 - **A. Mục đích phân tích**: So sánh mặt bằng định giá và độ phân tán giữa ba kiểu dáng truyền động chính: Xe tay ga, Xe số và Xe côn tay/Moto.
 - **B. Phương pháp**: Phân tích biểu đồ hộp phân tầng và kiểm định tính độc lập chi-square giữa loại phương tiện với thương hiệu.
 - **C. Kết quả quan sát**:
-  - `Tay ga`: Trung vị **$20.0\text{ triệu VND}$**, trung bình **$72.3\text{ triệu VND}$** ($n=3.597$). Giữ giá rất tốt ở các năm sản xuất gần.
-  - `Tay côn/Moto`: Trung vị **$22.0\text{ triệu VND}$**, trung bình **$43.4\text{ triệu VND}$** ($n=1.418$). Phân phối có dạng hai đỉnh giữa dòng côn tay underbone thể thao phổ thông (Exciter, Winner) và mô tô phân khối lớn đắt tiền.
-  - `Xe số`: Trung vị **$10.0\text{ triệu VND}$**, trung bình **$15.1\text{ triệu VND}$** ($n=2.188$). Mặt bằng giá thấp hơn xấp xỉ 50% so với xe tay ga và xe côn tay ở mọi phân vị.
+  - `Tay ga`: Trung vị **20.0 triệu VND**, trung bình **72.3 triệu VND** ($n=3.597$). Giữ giá rất tốt ở các năm sản xuất gần.
+  - `Tay côn/Moto`: Trung vị **22.0 triệu VND**, trung bình **43.4 triệu VND** ($n=1.418$). Phân phối có dạng hai đỉnh giữa dòng côn tay underbone thể thao phổ thông (Exciter, Winner) và mô tô phân khối lớn đắt tiền.
+  - `Xe số`: Trung vị **10.0 triệu VND**, trung bình **15.1 triệu VND** ($n=2.188$). Mặt bằng giá thấp hơn xấp xỉ 50% so với xe tay ga và xe côn tay ở mọi phân vị.
 - **D. Nhận xét**: Xe tay ga được ưa chuộng hàng đầu tại các thành phố lớn nhờ sự tiện dụng khi kẹt xe, cốp xe rộng và tính thời trang, tạo nên nhu cầu chuyển nhượng lớn và giữ giá tốt. Xe số chủ yếu phục vụ nhu cầu kinh tế cơ bản, chi phí sửa chữa rẻ và giá trị mua mới ban đầu thấp.
 - **E. Liên hệ với mô hình**: Kiểu dáng xe có mối liên hệ mật thiết với dung tích và dòng xe. Đưa biến `Loại_xe` vào mô hình giúp phân biệt rạch ròi giá trị giữa xe ga 125cc (ví dụ Air Blade ~30 triệu) và xe số 125cc (ví dụ Future ~20 triệu).
 
@@ -275,7 +283,7 @@ Quá trình phân tích dữ liệu khám phá (EDA) được thực hiện đa 
 - **A. Mục đích phân tích**: Khảo sát mật độ nguồn cung tin đăng trên địa bàn TP.HCM và đánh giá liệu vị trí địa lý có tạo nên sự chênh lệch giá cục bộ.
 - **B. Phương pháp**: Gom nhóm không gian địa lý, tính toán số lượng tin đăng và phân vị giá bán theo từng quận/huyện hành chính.
 - **C. Kết quả quan sát**:
-  - Nguồn cung tin đăng tập trung dày đặc tại các quận cửa ngõ và vùng ven đô thị hóa nhanh: Quận 12 ($730\text{ tin}$), Bình Tân ($669\text{ tin}$), Bình Chánh ($493\text{ tin}$), Gò Vấp ($492\text{ tin}$), Quận 7 ($410\text{ tin}$), Bình Thạnh ($402\text{ tin}$), Hóc Môn ($389\text{ tin}$), Quận 9 ($387\text{ tin}$) và TP. Thủ Đức ($383\text{ tin}$).
+  - Nguồn cung tin đăng tập trung dày đặc tại các quận cửa ngõ và vùng ven đô thị hóa nhanh: Quận 12 (730 tin), Bình Tân (669 tin), Bình Chánh (493 tin), Gò Vấp (492 tin), Quận 7 (410 tin), Bình Thạnh (402 tin), Hóc Môn (389 tin), Quận 9 (387 tin) và TP. Thủ Đức (383 tin).
   - Mức giá trung bình cao hơn tập trung tại các quận trung tâm và khu dân cư cao cấp: Quận 5, Quận 2, Quận 10 và Tân Bình.
 - **D. Nhận xét**: Các quận ngoại thành tập trung nhiều khu công nghiệp, dân nhập cư và các tuyến đường buôn bán xe máy cũ sầm uất (như trục Quốc lộ 1A), dẫn đến thanh khoản dồi dào. Ngược lại, giá trung bình cao ở các quận trung tâm không hẳn do "đất đắt xe đắt", mà chủ yếu do cơ cấu loại xe được rao bán tại đây có tỷ lệ xe tay ga cao cấp (SH, Vespa) và xe côn tay đắt tiền cao hơn nhiều.
 - **E. Liên hệ với mô hình**: Thuộc tính địa lý cung cấp tín hiệu không gian bổ trợ. Nhờ khả năng phân tách tương tác, mô hình cây có thể bóc tách giá trị thực của xe ra khỏi sự thiên lệch cơ cấu dòng xe theo vùng địa lý, tránh việc thổi phồng định giá sai lệch cho các quận trung tâm.
@@ -312,7 +320,7 @@ Quá trình phân tích dữ liệu khám phá (EDA) được thực hiện đa 
 2. **Mã hóa biến phân loại**: Áp dụng `LabelEncoder` cho các biến: `Thương_hiệu`, `Dòng_xe`, `Loại_xe`, `Dung_tích_xe` và `Tình_trạng`.
 3. **Đặc trưng số phái sinh**: Tính toán độ tuổi của phương tiện:
 
-$$\text{Tuổi xe} = 2025 - \text{Năm đăng ký}$$
+$$\mathrm{VehicleAge} = 2025 - \mathrm{RegistrationYear}$$
 
 Trích xuất khung giá tham chiếu lịch sử theo thương hiệu và dòng xe (`Khoảng_giá_min`, `Khoảng_giá_max`).
 
@@ -337,7 +345,7 @@ Dự án đã thực nghiệm hai kiến trúc mô hình học máy dạng cây:
 
 ### 2. PySpark MLlib Random Forest Regressor
 - **Cấu hình**: Mô hình Random Forest phân tán chạy trên cụm Spark cục bộ (Local cluster mode).
-- **Phát hiện thực nghiệm**: PySpark được huấn luyện trực tiếp trên tập dữ liệu thô chưa lọc ngoại lai (`df1`) thay vì tập sạch `df_filtered`. Sự xuất hiện của các tin đăng giá ảo hàng tỷ đồng đã làm sai số bình phương trung bình trên tập huấn luyện bị bóp méo nghiêm trọng: $\text{RMSE}_{\text{train}} \approx 1.77 \times 10^9\text{ VND}$ và $R^2_{\text{train}} = 0.006$. Khi đánh giá trên tập kiểm thử, mô hình đạt $R^2_{\text{test}} = 0.799$ và $\text{RMSE}_{\text{test}} \approx 8.44\text{ triệu VND}$.
+- **Phát hiện thực nghiệm**: PySpark được huấn luyện trực tiếp trên tập dữ liệu thô chưa lọc ngoại lai (`df1`) thay vì tập sạch `df_filtered`. Sự xuất hiện của các tin đăng giá ảo hàng tỷ đồng đã làm sai số bình phương trung bình trên tập huấn luyện bị bóp méo nghiêm trọng: $\mathrm{RMSE}_{\mathrm{train}} \approx 1.77 \times 10^9\text{ VND}$ và $R^2_{\mathrm{train}} = 0.006$. Khi đánh giá trên tập kiểm thử, mô hình đạt $R^2_{\mathrm{test}} = 0.799$ và $\\mathrm{RMSE}_{\\mathrm{test}} \\approx 8.44$ triệu VND.
 
 ---
 
@@ -378,14 +386,14 @@ flowchart TD
 2. **Phân tích phần dư bằng Median Absolute Deviation (MAD)**:
    - Đo lường mức độ chênh lệch chuẩn hóa giữa giá rao bán thực tế và giá dự đoán hợp lý bằng thống kê bền vững (Robust Statistics):
 
-$$Z_{\text{residual}} = \frac{|y - \hat{y}|}{1.4826 \times \text{MAD}}$$
+$$Z_{\mathrm{residual}} = \frac{|y - \hat{y}|}{1.4826 \times \mathrm{MAD}}$$
 
 Trong đó:
 - $y$: Giá rao bán thực tế của tin đăng (VND).
 - $\hat{y}$: Mức giá hợp lý dự đoán từ mô hình Random Forest (VND).
-- $\text{MAD}$: Độ lệch tuyệt đối trung vị (Median Absolute Deviation) của chuỗi sai số phần dư trên tập kiểm thử: $\text{MAD} = \text{median}(|(y_i - \hat{y}_i) - \text{median}(y - \hat{y})|)$.
+- $\mathrm{MAD}$: Độ lệch tuyệt đối trung vị (Median Absolute Deviation) của chuỗi sai số phần dư trên tập kiểm thử: $\mathrm{MAD} = \mathrm{median}(|(y_i - \hat{y}_i) - \mathrm{median}(y - \hat{y})|)$.
 - Hệ số chuẩn hóa $1.4826$ bảo đảm tính tương đương tiệm cận với độ lệch chuẩn của phân phối chuẩn, đồng thời hoàn toàn miễn nhiễm trước sự bóp méo của các điểm dị biệt cực đoan.
-- Ngưỡng cảnh báo: Mọi tin đăng có $|Z_{\text{residual}}| > 3.0$ được gắn nhãn bất thường về giá.
+- Ngưỡng cảnh báo: Mọi tin đăng có $|Z_{\mathrm{residual}}| > 3.0$ được gắn nhãn bất thường về giá.
 3. **Đối chiếu biên độ giá lịch sử**:
    - Kiểm tra xem mức giá có vượt ra ngoài khung giá sàn/trần thực nghiệm (`Khoảng_giá_min`, `Khoảng_giá_max`) tổng hợp theo từng thương hiệu và dòng xe hay không.
 
@@ -397,10 +405,10 @@ Quy trình sàng lọc đã được áp dụng trên toàn bộ **6.544 tin đ�
 
 | Nhóm bất thường | Số lượng | Tỷ lệ | Tiêu chí chẩn đoán | Ý nghĩa vận hành & Hành động khuyến nghị |
 | :--- | :---: | :---: | :--- | :--- |
-| **Bình thường (Normal)** | **3.835** | **58.6%** | Phần dư $-3.0 \le Z_{\text{residual}} \le 3.0$ và giá nằm trong $[P_{\min}, P_{\max}]$ | Tin đăng an toàn, tự động duyệt hiển thị trên sàn giao dịch. |
+| **Bình thường (Normal)** | **3.835** | **58.6%** | Phần dư $-3.0 \le Z_{\mathrm{residual}} \le 3.0$ và giá nằm trong $[P_{\min}, P_{\max}]$ | Tin đăng an toàn, tự động duyệt hiển thị trên sàn giao dịch. |
 | **Vi phạm min/max (Boundary Violation)** | **2.327** | **35.6%** | Giá niêm yết nằm ngoài dải giá sàn/trần lịch sử của dòng xe | Kích hoạt nhãn cảnh báo giá bất thường; khuyến nghị người mua đối chiếu kỹ giấy tờ và đời xe. |
-| **Giá cao bất thường (High Outlier)** | **232** | **3.5%** | Phần dư dương vượt ngưỡng ($Z_{\text{residual}} > 3.0$) | Có thể là xe độ phụ tùng giá trị cao, phiên bản sưu tầm hiếm hoặc người bán định giá ảo; chuyển sang hàng đợi xác minh linh kiện. |
-| **Giá thấp bất thường (Low Outlier)** | **150** | **2.3%** | Phần dư âm vượt ngưỡng ($Z_{\text{residual}} < -3.0$) | Nguy cơ cao xe tai nạn, hỏng hóc nặng, xe không giấy tờ hoặc thủ thuật giật tít câu khách (bait-and-switch); ưu tiên kiểm duyệt trước khi hiển thị. |
+| **Giá cao bất thường (High Outlier)** | **232** | **3.5%** | Phần dư dương vượt ngưỡng ($Z_{\mathrm{residual}} > 3.0$) | Có thể là xe độ phụ tùng giá trị cao, phiên bản sưu tầm hiếm hoặc người bán định giá ảo; chuyển sang hàng đợi xác minh linh kiện. |
+| **Giá thấp bất thường (Low Outlier)** | **150** | **2.3%** | Phần dư âm vượt ngưỡng ($Z_{\mathrm{residual}} < -3.0$) | Nguy cơ cao xe tai nạn, hỏng hóc nặng, xe không giấy tờ hoặc thủ thuật giật tít câu khách (bait-and-switch); ưu tiên kiểm duyệt trước khi hiển thị. |
 
 Hệ thống sàng lọc này giúp ban quản trị sàn thương mại điện tử tự động hóa việc phê duyệt cho gần 59% tin đăng tiêu chuẩn, đồng thời tập trung nhân lực kiểm duyệt vào các nhóm rủi ro cao, gia tăng mức độ bảo vệ quyền lợi người tiêu dùng mà không phát sinh chi phí vận hành quá lớn.
 
@@ -416,14 +424,14 @@ $$R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}$$
 
 - **Sai số tuyệt đối trung bình (MAE)**: Đo lường độ lệch trung bình giữa giá dự đoán và giá thực tế bằng đơn vị tiền Việt Nam Đồng (VND), phản ánh sai số trực quan, dễ hiểu nhất đối với người dùng kinh doanh:
 
-$$\text{MAE} = \frac{1}{n} \sum_{i=1}^n |y_i - \hat{y}_i|$$
+$$\mathrm{MAE} = \frac{1}{n} \sum_{i=1}^n |y_i - \hat{y}_i|$$
 
 - **Căn bậc hai sai số bình phương trung bình (RMSE)**: Phạt rất nặng các sai số dự đoán lớn, đóng vai trò then chốt trong việc cảnh báo các trường hợp định giá sai lệch nghiêm trọng trên các dòng xe đắt tiền:
 
-$$\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2}$$
+$$\mathrm{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2}$$
 
 > [!NOTE]
-> **Đính chính kỹ thuật chỉ số RMSE**: Tại Cell 108 của notebook, hàm `mean_squared_error` được gọi mà không khai căn bậc hai, trả về giá trị MSE là $23.934.808.294.632\text{ VND}^2$. Giá trị căn bậc hai sai số thực tế là $\sqrt{\text{MSE}} \approx \mathbf{4.892.321\text{ VND}}$. Các tài liệu cũ trước đây đã cắt ngắn chuỗi số và ghi nhận nhầm thành `"23,934,808"`.
+> **Đính chính kỹ thuật chỉ số RMSE**: Tại Cell 108 của notebook, hàm `mean_squared_error` được gọi mà không khai căn bậc hai, trả về giá trị MSE là 23.934.808.294.632 $\text{VND}^2$. Giá trị căn bậc hai sai số thực tế là $\sqrt{\mathrm{MSE}} \approx \mathbf{4.892.321\text{ VND}}$. Các tài liệu cũ trước đây đã cắt ngắn chuỗi số và ghi nhận nhầm thành `"23,934,808"`.
 
 Bảng tổng hợp so sánh hiệu năng của toàn bộ các thuật toán được thử nghiệm trong notebook:
 
@@ -443,7 +451,7 @@ Bảng tổng hợp so sánh hiệu năng của toàn bộ các thuật toán đ
 
 1. **Lý do họ mô hình cây vượt trội**: Random Forest ($R^2 = 0.890$) và Gradient Boosting ($R^2 = 0.875$) dẫn đầu bởi vì định giá xe máy bị chi phối bởi các mối quan hệ thứ bậc phi tuyến tính (hãng xe $\to$ phân khúc $\to$ đời xe $\to$ tình trạng máy móc). Cấu trúc cây phân chia không gian đặc trưng thành các vùng giá cục bộ đồng nhất mà không áp đặt bất kỳ giả định tuyến tính cứng nhắc nào.
 2. **Thất bại của mô hình tuyến tính (Ridge)**: Ridge chỉ đạt $R^2 = 0.260$ do mối quan hệ giữa các biến số mang tính tương tác nhân quả thay vì phép cộng tuyến tính (ví dụ: cùng giảm 1 năm tuổi, xe Ducati mất giá hàng chục triệu đồng, trong khi xe Wave chỉ giảm vài trăm nghìn đồng).
-3. **Hiện tượng Overfitting của LightGBM**: Cơ chế phát triển cây theo chiều sâu tối ưu (leaf-wise) của LightGBM đã học quá sâu vào các từ khóa hiếm trong ma trận TF-IDF 3.000 chiều, dẫn đến khoảng cách lớn giữa hiệu năng tập huấn luyện và tập kiểm thử ($R^2_{\text{test}} = 0.285$). Trong khi đó, Random Forest với cơ chế chọn ngẫu nhiên tập con đặc trưng (`max_features='sqrt'`) đã ngăn chặn việc một số từ khóa cá biệt chi phối quyết định phân nhánh.
+3. **Hiện tượng Overfitting của LightGBM**: Cơ chế phát triển cây theo chiều sâu tối ưu (leaf-wise) của LightGBM đã học quá sâu vào các từ khóa hiếm trong ma trận TF-IDF 3.000 chiều, dẫn đến khoảng cách lớn giữa hiệu năng tập huấn luyện và tập kiểm thử ($R^2_{\mathrm{test}} = 0.285$). Trong khi đó, Random Forest với cơ chế chọn ngẫu nhiên tập con đặc trưng (`max_features='sqrt'`) đã ngăn chặn việc một số từ khóa cá biệt chi phối quyết định phân nhánh.
 
 ### Phân tích biểu đồ Giá thực tế vs. Giá dự đoán
 
@@ -451,8 +459,8 @@ Bảng tổng hợp so sánh hiệu năng của toàn bộ các thuật toán đ
 
 Biểu đồ phân tán so sánh giữa Giá thực tế ($y$) và Giá dự đoán ($\hat{y}$) cung cấp minh chứng trực quan rõ nét về mức độ chuẩn xác của mô hình:
 - **Đường chéo phân giác ($y = x$)**: Thể hiện điểm hội tụ định giá hoàn hảo lý thuyết.
-- **Vùng hội tụ xe phổ thông ($10\text{ - }40\text{ triệu VND}$)**: Đại đa số các điểm dữ liệu bám rất sát đường chéo $y = x$, minh chứng mô hình đạt độ chính xác rất cao ở phân khúc xe máy thông dụng nơi có mật độ dữ liệu dồi dào nhất.
-- **Vùng phân tán cao cấp ($> 50\text{ triệu VND}$)**: Các điểm dữ liệu có xu hướng tản rộng dần khi tiến về phía trần giá. Các dòng xe đắt tiền thường có tình trạng cá nhân hóa cao, độ hao mòn riêng biệt và số lượng mẫu ít, dẫn đến biên độ dao động dự đoán rộng hơn.
+- **Vùng hội tụ xe phổ thông (10 - 40 triệu VND)**: Đại đa số các điểm dữ liệu bám rất sát đường chéo $y = x$, minh chứng mô hình đạt độ chính xác rất cao ở phân khúc xe máy thông dụng nơi có mật độ dữ liệu dồi dào nhất.
+- **Vùng phân tán cao cấp (> 50 triệu VND)**: Các điểm dữ liệu có xu hướng tản rộng dần khi tiến về phía trần giá. Các dòng xe đắt tiền thường có tình trạng cá nhân hóa cao, độ hao mòn riêng biệt và số lượng mẫu ít, dẫn đến biên độ dao động dự đoán rộng hơn.
 
 ### Phân tích phần dư & Tính bền vững của chỉ số MAD
 
@@ -461,9 +469,9 @@ Sai số phần dư được định nghĩa là $e_i = y_i - \hat{y}_i$:
 - **Hiện tượng đuôi dày (Leptokurtosis)**: Phân phối phần dư có phần đuôi dày hơn phân phối chuẩn do sự tồn tại của các tin rao bán gấp giá rẻ hoặc xe độ phụ tùng đắt tiền.
 - **Mối liên hệ với chỉ số MAD**: Điểm Z-score tham số truyền thống dựa trên độ lệch chuẩn mẫu ($\sigma$) rất dễ bị méo mó khi gặp các phần dư ngoại lai cực lớn. Bằng cách sử dụng **Độ lệch tuyệt đối trung vị (MAD)**:
 
-$$\text{MAD} = \text{median}(|e_i - \text{median}(e)|)$$
+$$\mathrm{MAD} = \mathrm{median}(|e_i - \mathrm{median}(e)|)$$
 
-Hệ thống tính toán được ước lượng độ phân tán bền vững $1.4826 \times \text{MAD}$ có khả năng chịu đựng tới $50\%$ dữ liệu ngoại lai mà không bị sai lệch. Đặc tính toán học này bảo đảm ngưỡng phát hiện bất thường tại Mục 10 hoàn toàn chuẩn xác và không bị đánh lừa bởi các tin đăng ảo.
+Hệ thống tính toán được ước lượng độ phân tán bền vững $1.4826 \times \mathrm{MAD}$ có khả năng chịu đựng tới 50% dữ liệu ngoại lai mà không bị sai lệch. Đặc tính toán học này bảo đảm ngưỡng phát hiện bất thường tại Mục 10 hoàn toàn chuẩn xác và không bị đánh lừa bởi các tin đăng ảo.
 
 ![Evaluation Metrics](images/eval_chart.png)
 
@@ -475,7 +483,7 @@ Hệ thống tính toán được ước lượng độ phân tán bền vững 
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **Honda Air Blade 2018** | 25.000 km, Tay ga, 125cc | 28.000.000 VND | 27.150.000 VND | 850.000 VND | Bình thường (Định giá chuẩn xác) |
 | **Yamaha Exciter 2019** | 32.000 km, Tay côn, 150cc | 22.000.000 VND | 23.450.000 VND | 1.450.000 VND | Bình thường (Nằm trong dải tin cậy) |
-| **Vespa Sprint 2021** | 12.000 km, Tay ga, 125cc | 68.000.000 VND | 52.300.000 VND | 15.700.000 VND | Giá cao bất thường ($Z_{\text{residual}} > 3.0$) |
+| **Vespa Sprint 2021** | 12.000 km, Tay ga, 125cc | 68.000.000 VND | 52.300.000 VND | 15.700.000 VND | Giá cao bất thường ($Z_{\mathrm{residual}} > 3.0$) |
 
 ---
 

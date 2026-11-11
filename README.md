@@ -48,7 +48,7 @@ In emerging peer-to-peer (P2P) classified marketplaces, information asymmetry pr
 | **Dataset Scale** | 7,208 raw scraped ads; 6,544 rows utilized after data cleaning and IQR price outlier trimming. |
 | **Primary Methodologies** | Supervised regression for valuation; Unsupervised outlier detection (LOF) and residual Z-scores for anomaly screening. |
 | **Core Models** | Scikit-Learn Random Forest Regressor, PySpark MLlib Random Forest, Local Outlier Factor (LOF), TF-IDF (3,000 features). |
-| **Experimental Metrics** | Test $R^2 = 0.890$, $\text{MAE} \approx 3.69\text{M VND}$, $\text{RMSE} \approx 4.89\text{M VND}$ (with documented target leakage caveats). |
+| **Experimental Metrics** | Test $R^2 = 0.890$, $\mathrm{MAE} \approx 3.69\text{M VND}$, $\mathrm{RMSE} \approx 4.89\text{M VND}$ (with documented target leakage caveats). |
 | **Deliverables** | Comprehensive research notebook, reusable inference pipeline (`price_pipeline_module.py`), and Streamlit web application (`app.py`). |
 
 ---
@@ -176,12 +176,12 @@ Listing descriptions in Vietnamese classified ads contain heavy noise, informal 
 
 ### Target Outlier Trimming via IQR
 An analysis of the raw price target `Giá` revealed severe right-skewness caused by joke postings (e.g., 9,999,999,999 VND) and ultra-luxury collector motorcycles:
-- First Quartile ($Q1$): $13,500,000\text{ VND}$
-- Third Quartile ($Q3$): $30,500,000\text{ VND}$
-- Interquartile Range ($\text{IQR}$): $17,000,000\text{ VND}$
-- Theoretical Bounds: $[Q1 - 1.5 \times \text{IQR}, Q3 + 1.5 \times \text{IQR}] = [-12,000,000\text{ VND}, 56,000,000\text{ VND}]$
+- First Quartile ($Q1$): 13,500,000 VND
+- Third Quartile ($Q3$): 30,500,000 VND
+- Interquartile Range ($\mathrm{IQR}$): 17,000,000 VND
+- Theoretical Bounds: $[Q1 - 1.5 \times \mathrm{IQR}, Q3 + 1.5 \times \mathrm{IQR}] = [-12,000,000, 56,000,000]\text{ VND}$
 
-The lower threshold was set to a realistic non-negative floor, while listings with prices exceeding $56,000,000\text{ VND}$ were excluded from the core regression modeling dataset. This step pruned the sample size from 7,208 to **6,544 records**, stabilizing the variance for standard commuting motorcycles. Comprehensive distribution plots and analytical interpretations for all variables before and after cleaning are presented in detail in Section 7.
+The lower threshold was set to a realistic non-negative floor, while listings with prices exceeding 56,000,000 VND were excluded from the core regression modeling dataset. This step pruned the sample size from 7,208 to **6,544 records**, stabilizing the variance for standard commuting motorcycles. Comprehensive distribution plots and analytical interpretations for all variables before and after cleaning are presented in detail in Section 7.
 
 ---
 
@@ -197,11 +197,11 @@ Exploratory Data Analysis (EDA) was conducted across numerical, categorical, geo
 - **B. Method**: Histogram with Kernel Density Estimation (KDE) and boxplot distribution analysis on both raw linear scale and natural log scale ($\log(1 + y)$).
 - **C. Key Observations**:
   - The raw price distribution is severely right-skewed with extreme positive skewness ($> 4.5$).
-  - Mean price (~$49.2\text{M VND}$) is nearly three times higher than the median price (~$16.5\text{M VND}$), reflecting the massive leverage of multi-million and multi-billion VND joke or luxury listings in the raw dataset.
-  - The central $50\%$ of listings concentrate tightly between $Q1 = 13.5\text{M VND}$ and $Q3 = 30.5\text{M VND}$.
-  - Applying natural log transformation ($\log(1 + \text{Price})$) compresses the exponential right tail, yielding an approximately symmetric bell-shaped distribution centered at mean $\approx 16.60$ with standard deviation $\approx 0.65$.
+  - Mean price (~49.2M VND) is nearly three times higher than the median price (~16.5M VND), reflecting the massive leverage of multi-million and multi-billion VND joke or luxury listings in the raw dataset.
+  - The central 50% of listings concentrate tightly between $Q1 = 13.5\text{M VND}$ and $Q3 = 30.5\text{M VND}$.
+  - Applying natural log transformation ($\log(1 + y)$ (where $y$ is listing price)) compresses the exponential right tail, yielding an approximately symmetric bell-shaped distribution centered at mean $\approx 16.60$ with standard deviation $\approx 0.65$.
 - **D. Interpretation**: The Vietnamese two-wheeler resale marketplace is predominantly populated by budget-conscious commuter motorcycles priced below $30\text{M VND}$. Listings in the hundreds of millions or billions of VND represent either ultra-luxury imported collector bikes or fictitious test postings, both of which distort standard regression loss functions.
-- **E. Relevance to Modeling**: High skewness causes squared-error loss functions (MSE/RMSE) to over-index on extreme values at the expense of accuracy across mass-market bikes. This insight justified: (1) trimming unrealistic listings above $56\text{M VND}$ via IQR to train the core commuter model, and (2) utilizing log-price transformations or tree-based ensemble split criteria that remain invariant to monotonic scaling.
+- **E. Relevance to Modeling**: High skewness causes squared-error loss functions (MSE/RMSE) to over-index on extreme values at the expense of accuracy across mass-market bikes. This insight justified: (1) trimming unrealistic listings above 56M VND via IQR to train the core commuter model, and (2) utilizing log-price transformations or tree-based ensemble split criteria that remain invariant to monotonic scaling.
 
 ### 7.2 Odometer Mileage Distribution
 
@@ -210,22 +210,30 @@ Exploratory Data Analysis (EDA) was conducted across numerical, categorical, geo
 - **A. Analysis Objective**: Quantify vehicle usage intensity across the fleet, detect synthetic placeholder mileage entries, and assess mileage depreciation effects.
 - **B. Method**: Continuous distribution profiling, boxplot outlier boundaries, and usage tier segmentation.
 - **C. Key Observations**:
-  - Median odometer reading is $28,000\text{ km}$, with $Q1 = 10,000\text{ km}$ and $Q3 = 53,400\text{ km}$ ($\text{IQR} = 43,400\text{ km}$).
-  - The distribution exhibits prominent artificial spikes at round placeholder values, notably $0\text{ km}$, $99,999\text{ km}$, and $999,999\text{ km}$.
-  - Three distinct usage cohorts emerge: "Near-new / Demo" ($< 10,000\text{ km}$), "Standard commuting" ($10,000 - 50,000\text{ km}$), and "Heavy commercial / Delivery wear" ($> 50,000\text{ km}$).
-- **D. Interpretation**: Sellers frequently omit genuine odometer logs or input placeholder strings when the mechanical odometer has broken or rolled over. In urban Vietnam, an average commuter travels approximately $6,000 - 10,000\text{ km/year}$. Vehicles with $> 50,000\text{ km}$ reflect intense multi-year utilization or ride-hailing/delivery service.
-- **E. Relevance to Modeling**: Mileage alone cannot serve as an isolated linear predictor because a 10-year-old bike with $20,000\text{ km}$ implies either odometer tampering or rare collector preservation. This necessitated combining mileage with vehicle age into an interaction rate: $\text{Km\_per\_year} = \frac{\text{Số\_km\_đã\_đi}}{\max(\text{Tuổi\_xe}, 1)}$, alongside clipping dummy entries ($> 200,000\text{ km}$) during preprocessing.
+  - Median odometer reading is 28,000 km, with $Q1 = 10,000\text{ km}$ and $Q3 = 53,400\text{ km}$ ($\mathrm{IQR} = 43,400\text{ km}$).
+  - The distribution exhibits prominent artificial spikes at round placeholder values, notably 0 km, 99,999 km, and 999,999 km.
+  - Three distinct usage cohorts emerge: "Near-new / Demo" ($< 10,000 km$), "Standard commuting" ($10,000 - 50,000 km$), and "Heavy commercial / Delivery wear" ($> 50,000 km$).
+- **D. Interpretation**: Sellers frequently omit genuine odometer logs or input placeholder strings when the mechanical odometer has broken or rolled over. In urban Vietnam, an average commuter travels approximately $6,000 - 10,000 km/year$. Vehicles with $> 50,000 km$ reflect intense multi-year utilization or ride-hailing/delivery service.
+- **E. Relevance to Modeling**: Mileage alone cannot serve as an isolated linear predictor because a 10-year-old bike with $20,000 km$ implies either odometer tampering or rare collector preservation. This necessitated combining mileage with vehicle age into an annual wear interaction rate:
+
+$$\mathrm{KmPerYear} = \frac{\mathrm{Mileage}}{\max(\mathrm{VehicleAge}, 1)}$$
+
+Where $\mathrm{Mileage}$ represents the odometer reading (`Số_Km_đã_đi`), and $\mathrm{VehicleAge}$ represents vehicle age in years (`Tuổi_xe`), alongside clipping artificial placeholder entries (> 200,000 km) during preprocessing.
 
 ### 7.3 Registration Year & Vehicle Age
 
 ![Registration Year Distribution](images/num_plot_3.png)
 
 - **A. Analysis Objective**: Profile the fleet vintage distribution and quantify non-linear vehicle depreciation rates over chronological time.
-- **B. Method**: Discrete temporal frequency analysis and non-linear age transformation ($\text{Tuổi\_xe} = 2025 - \text{Năm\_đăng\_ký}$).
+- **B. Method**: Discrete temporal frequency analysis and non-linear age transformation:
+
+$$\mathrm{VehicleAge} = 2025 - \mathrm{RegistrationYear}$$
+
+Where $\mathrm{RegistrationYear}$ is the registered calendar year (`Năm_đăng_ký`).
 - **C. Key Observations**:
   - The vast majority of listings are concentrated between registration years 2010 and 2020, peaking sharply between 2015 and 2018 (median registration year: 2015, corresponding to an average age of ~10 years relative to the 2025 baseline).
-  - Pre-2005 motorcycles represent less than $3\%$ of the total sample, consisting predominantly of vintage Honda Cub/Dream or restored collectors.
-- **D. Interpretation**: Motorbikes in Vietnam have an active resale lifecycle of 5 to 10 years. Vehicles experience steep depreciation during their first 1 to 3 years of road service (losing $15\% - 25\%$ of original showroom value annually), followed by a stabilizing asymptotic tail where market value depends primarily on operational condition rather than exact calendar year.
+  - Pre-2005 motorcycles represent less than 3% of the total sample, consisting predominantly of vintage Honda Cub/Dream or restored collectors.
+- **D. Interpretation**: Motorbikes in Vietnam have an active resale lifecycle of 5 to 10 years. Vehicles experience steep depreciation during their first 1 to 3 years of road service (losing 15% - 25% of original showroom value annually), followed by a stabilizing asymptotic tail where market value depends primarily on operational condition rather than exact calendar year.
 - **E. Relevance to Modeling**: The calendar year feature was transformed into operational age (`Tuổi_xe`). Because depreciation follows a distinct convex decay curve rather than a constant linear slope, linear regression models show high bias, whereas decision trees naturally capture step-function thresholds at critical warranty and lifecycle milestones (e.g., 1 year, 3 years, 5 years).
 
 ### 7.4 Engine Capacity Segments
@@ -236,11 +244,11 @@ Exploratory Data Analysis (EDA) was conducted across numerical, categorical, geo
 - **A. Analysis Objective**: Evaluate the market representation and pricing divergence across statutory engine displacement brackets in Vietnam.
 - **B. Method**: Categorical frequency distribution analysis combined with stratified boxplot price distributions across displacement brackets (`<50cc`, `50 - 100cc`, `100 - 175cc`, `>175cc`).
 - **C. Key Observations**:
-  - `100 - 175cc`: Overwhelmingly dominates the market with **$5,852\text{ listings}$ ($81.2\%$ of total dataset)**; median price is **$17.5\text{M VND}$** (IQR: $12.5\text{M} - 28.5\text{M VND}$).
-  - `50 - 100cc`: Accounts for $686\text{ listings}$ ($9.5\%$), with a median price of **$8.5\text{M VND}$**, representing legacy entry-level underbone commuters.
-  - `Dưới 50cc`: Comprises $285\text{ listings}$ ($4.0\%$), with a median price of **$9.8\text{M VND}$**, catering to students and unlicensed riders.
-  - `Trên 175cc`: Represents $314\text{ listings}$ ($4.4\%$), but median price surges to **$102.5\text{M VND}$** and mean reaches **$554.4\text{M VND}$**, exhibiting enormous price variance spanning from 40M to several billion VND.
-- **D. Interpretation**: The $100 - 175\text{cc}$ segment corresponds directly to the Vietnamese A1 motorcycle license threshold, encompassing ubiquitous national commuter models (Honda Wave 110, Vision 110, Air Blade 125/150, SH 125/150). The `>175cc` bracket requires an A2 heavy motorcycle license, representing premium leisure, sport touring, and luxury status symbols with high import excise taxes.
+  - `100 - 175cc`: Overwhelmingly dominates the market with **5,852 listings (81.2% of total dataset)**; median price is **17.5M VND** (IQR: 12.5M - 28.5M VND).
+  - `50 - 100cc`: Accounts for 686 listings (9.5%), with a median price of **8.5M VND**, representing legacy entry-level underbone commuters.
+  - `Dưới 50cc`: Comprises 285 listings (4.0%), with a median price of **9.8M VND**, catering to students and unlicensed riders.
+  - `Trên 175cc`: Represents 314 listings (4.4%), but median price surges to **102.5M VND** and mean reaches **554.4M VND**, exhibiting enormous price variance spanning from 40M to several billion VND.
+- **D. Interpretation**: The 100 - 175cc segment corresponds directly to the Vietnamese A1 motorcycle license threshold, encompassing ubiquitous national commuter models (Honda Wave 110, Vision 110, Air Blade 125/150, SH 125/150). The `>175cc` bracket requires an A2 heavy motorcycle license, representing premium leisure, sport touring, and luxury status symbols with high import excise taxes.
 - **E. Relevance to Modeling**: Engine capacity operates as a sharp structural regime separator. Because the `>175cc` cohort exhibits an order-of-magnitude higher price variance, categorical encoding coupled with tree-based branching prevents heavy luxury bikes from skewing predictions on standard commuter models.
 
 ### 7.5 Average Price by Brand
@@ -250,8 +258,8 @@ Exploratory Data Analysis (EDA) was conducted across numerical, categorical, geo
 - **A. Analysis Objective**: Identify brand equity hierarchies and quantify the price premium separating luxury/imported manufacturers from high-volume domestic brands.
 - **B. Method**: Group-by aggregation computing both parametric (mean) and non-parametric (median) valuations, cross-tabulated with listing sample support.
 - **C. Key Observations**:
-  - Ultra-luxury heavy motorcycle manufacturers record the highest average prices: Harley-Davidson leads at **$358.7\text{M VND}$** ($n=13$), followed by BMW at **$324.7\text{M VND}$** ($n=10$), Triumph at **$229.1\text{M VND}$** ($n=9$), and Ducati at **$152.2\text{M VND}$** ($n=16$).
-  - High-volume commuter manufacturers comprise over $85\%$ of market listings: Honda dominates with $n=4,372$ listings (median **$19.0\text{M VND}$**, mean $63.8\text{M VND}$ pulled upward by premium SH300i/CBR models), Yamaha ($n=1,720$, median **$18.2\text{M VND}$**), and Piaggio ($n=380$, median **$25.0\text{M VND}$**, mean $33.1\text{M VND}$).
+  - Ultra-luxury heavy motorcycle manufacturers record the highest average prices: Harley-Davidson leads at **358.7M VND** ($n=13$), followed by BMW at **324.7M VND** ($n=10$), Triumph at **229.1M VND** ($n=9$), and Ducati at **152.2M VND** ($n=16$).
+  - High-volume commuter manufacturers comprise over 85% of market listings: Honda dominates with $n=4,372$ listings (median **19.0M VND**, mean 63.8M VND pulled upward by premium SH300i/CBR models), Yamaha ($n=1,720$, median **18.2M VND**), and Piaggio ($n=380$, median **25.0M VND**, mean 33.1M VND).
 - **D. Interpretation**: The market bifurcates into two distinct universes: high-volume domestic utility bikes (Honda, Yamaha) with high liquidity and predictable depreciation, versus low-volume luxury marques (Harley-Davidson, BMW, Ducati) characterized by high import tariffs, collector appeal, and bespoke aftermarket customizations. Piaggio occupies a distinctive stylish intermediate tier.
 - **E. Relevance to Modeling**: `Thương_hiệu` is a primary splitting feature in tree models. However, because luxury brands have sparse representation ($n < 20$), linear models risk extreme coefficient instability. Tree ensembles handle this categorical imbalance cleanly, while target price envelopes (`Khoảng_giá_min`, `Khoảng_giá_max`) ground brand-specific boundaries.
 
@@ -262,9 +270,9 @@ Exploratory Data Analysis (EDA) was conducted across numerical, categorical, geo
 - **A. Analysis Objective**: Evaluate the price differentials and variance profiles across transmission and body formats (`Tay ga`, `Xe số`, `Tay côn/Moto`).
 - **B. Method**: Comparative stratified boxplot analysis and chi-square independence testing between vehicle format and brand.
 - **C. Key Observations**:
-  - `Tay ga` (Automatic Scooters): Median **$20.0\text{M VND}$**, mean **$72.3\text{M VND}$** ($n=3,597$). Demonstrates strong price retention across modern model years.
-  - `Tay côn/Moto` (Manual Clutch / Sport bikes): Median **$22.0\text{M VND}$**, mean **$43.4\text{M VND}$** ($n=1,418$). Exhibits heavy bimodal variance between entry 150cc clutch bikes (Yamaha Exciter, Honda Winner) and high-end superbikes.
-  - `Xe số` (Underbone / Manual gears): Median **$10.0\text{M VND}$**, mean **$15.1\text{M VND}$** ($n=2,188$). Median prices are ~50% lower than automatic scooters and manual clutch bikes across all quartiles.
+  - `Tay ga` (Automatic Scooters): Median **20.0M VND**, mean **72.3M VND** ($n=3,597$). Demonstrates strong price retention across modern model years.
+  - `Tay côn/Moto` (Manual Clutch / Sport bikes): Median **22.0M VND**, mean **43.4M VND** ($n=1,418$). Exhibits heavy bimodal variance between entry 150cc clutch bikes (Yamaha Exciter, Honda Winner) and high-end superbikes.
+  - `Xe số` (Underbone / Manual gears): Median **10.0M VND**, mean **15.1M VND** ($n=2,188$). Median prices are ~50% lower than automatic scooters and manual clutch bikes across all quartiles.
 - **D. Interpretation**: Scooters dominate urban commuting due to traffic ease, integrated storage, and modern styling, creating sustained secondary market demand. Underbone manual bikes represent low-maintenance, fuel-efficient utility vehicles predominantly traded in budget brackets.
 - **E. Relevance to Modeling**: Vehicle format interacts heavily with engine displacement and brand. Incorporating `Loại_xe` enables the regression model to accurately distinguish between a 125cc scooter (e.g., Honda Air Blade at ~30M VND) and a 125cc underbone bike (e.g., Honda Future at ~20M VND).
 
@@ -275,7 +283,7 @@ Exploratory Data Analysis (EDA) was conducted across numerical, categorical, geo
 - **A. Analysis Objective**: Investigate geographic patterns of listing supply across Ho Chi Minh City and assess whether spatial location drives price variations.
 - **B. Method**: Geospatial aggregation computing listing volume density and price distributions across administrative districts.
 - **C. Key Observations**:
-  - Listing supply heavily concentrates in outer gateway districts and high-density commuter hubs: Quận 12 ($730\text{ listings}$), Bình Tân ($669$), Bình Chánh ($493$), Gò Vấp ($492$), Quận 7 ($410$), Bình Thạnh ($402$), Hóc Môn ($389$), Quận 9 ($387$), and TP. Thủ Đức ($383$).
+  - Listing supply heavily concentrates in outer gateway districts and high-density commuter hubs: Quận 12 (730 listings), Bình Tân (669), Bình Chánh (493), Gò Vấp (492), Quận 7 (410), Bình Thạnh (402), Hóc Môn (389), Quận 9 (387), and TP. Thủ Đức (383).
   - Higher average listing prices cluster in central and affluent residential districts: Quận 5, Quận 2, Quận 10, and Tân Bình.
 - **D. Interpretation**: Outer suburban districts host large commuter populations, industrial corridors, and major roadside used-bike dealerships (e.g., along National Route 1A). Conversely, higher average prices in central districts do not reflect higher prices for identical bikes, but rather a distinct vehicle mix—a higher proportion of premium scooters (Vespa, SH) and sport bikes listed by wealthier urban residents.
 - **E. Relevance to Modeling**: Geographic district serves as a secondary spatial conditioning signal. Because district price variations are largely mediated by vehicle mix rather than independent geographic markup, tree ensembles effectively isolate intrinsic bike value without artificially inflating outer-district valuations.
@@ -312,7 +320,7 @@ Exploratory Data Analysis (EDA) was conducted across numerical, categorical, geo
 2. **Categorical Encoding**: Fitted `LabelEncoder` across categorical attributes: `Thương_hiệu`, `Dòng_xe`, `Loại_xe`, `Dung_tích_xe`, and `Tình_trạng`.
 3. **Derived Numerical Features**: Computed vehicle age:
 
-$$\text{Vehicle Age} = 2025 - \text{Registration Year}$$
+$$\mathrm{VehicleAge} = 2025 - \mathrm{RegistrationYear}$$
 
 Extracted historical brand and model price envelope reference values (`Khoảng_giá_min`, `Khoảng_giá_max`).
 
@@ -337,7 +345,7 @@ The project explored both single-node and distributed tree-based ensemble algori
 
 ### 2. PySpark MLlib Random Forest Regressor
 - **Architecture**: Distributed Random Forest model executed within an Apache Spark local cluster environment.
-- **Data Ingestion Finding**: PySpark was trained directly on the raw uncleaned dataset (`df1`) rather than the IQR-filtered dataset (`df_filtered`). The presence of multi-billion VND joke listings severely penalized mean squared error loss, resulting in training metrics $\text{RMSE}_{\text{train}} \approx 1.77 \times 10^9\text{ VND}$ and $R^2_{\text{train}} = 0.006$, while evaluating on the test split yielded $R^2_{\text{test}} = 0.799$ and $\text{RMSE}_{\text{test}} \approx 8.44\text{M VND}$.
+- **Data Ingestion Finding**: PySpark was trained directly on the raw uncleaned dataset (`df1`) rather than the IQR-filtered dataset (`df_filtered`). The presence of multi-billion VND joke listings severely penalized mean squared error loss, resulting in training metrics $\mathrm{RMSE}_{\mathrm{train}} \approx 1.77 \times 10^9\text{ VND}$ and $R^2_{\mathrm{train}} = 0.006$, while evaluating on the test split yielded $R^2_{\mathrm{test}} = 0.799$ and $\mathrm{RMSE}_{\mathrm{test}} \approx 8.44\text{M VND}$.
 
 ---
 
@@ -378,14 +386,14 @@ flowchart TD
 2. **Residual Analysis via Median Absolute Deviation (MAD)**:
    - Evaluates the standardized discrepancy between actual listing price and predicted fair market price using robust statistics:
 
-$$Z_{\text{residual}} = \frac{|y - \hat{y}|}{1.4826 \times \text{MAD}}$$
+$$Z_{\mathrm{residual}} = \frac{|y - \hat{y}|}{1.4826 \times \mathrm{MAD}}$$
 
 Where:
 - $y$: Actual vehicle listing price (VND).
 - $\hat{y}$: Model predicted fair price (VND).
-- $\text{MAD}$: Median Absolute Deviation of residuals on the evaluation split: $\text{MAD} = \text{median}(|(y_i - \hat{y}_i) - \text{median}(y - \hat{y})|)$.
+- $\mathrm{MAD}$: Median Absolute Deviation of residuals on the evaluation split: $\mathrm{MAD} = \mathrm{median}(|(y_i - \hat{y}_i) - \mathrm{median}(y - \hat{y})|)$.
 - The scale factor $1.4826$ ensures asymptotic consistency with standard deviation for normal distributions while remaining robust against heavy outlier distortion.
-- Decision Threshold: Any listing with $|Z_{\text{residual}}| > 3.0$ is flagged as a statistical pricing deviation.
+- Decision Threshold: Any listing with $|Z_{\mathrm{residual}}| > 3.0$ is flagged as a statistical pricing deviation.
 3. **Platform Historical Boundary Verification**:
    - Cross-references listing price against historical empirical minimum and maximum envelopes (`Khoảng_giá_min`, `Khoảng_giá_max`) compiled across brand and model variants.
 
@@ -397,10 +405,10 @@ The screening pipeline was executed across all **6,544 evaluated listings** (Not
 
 | Anomaly Group | Sample Count | Percentage | Diagnostic Criteria | Operational Significance & Marketplace Action |
 | :--- | :---: | :---: | :--- | :--- |
-| **Normal (Bình thường)** | **3,835** | **58.6%** | Residual $-3.0 \le Z_{\text{residual}} \le 3.0$ and price within historical $[P_{\min}, P_{\max}]$ | Standard listing; automatically approved for platform display. |
+| **Normal (Bình thường)** | **3,835** | **58.6%** | Residual $-3.0 \le Z_{\mathrm{residual}} \le 3.0$ and price within historical $[P_{\min}, P_{\max}]$ | Standard listing; automatically approved for platform display. |
 | **Boundary Violation (Vi phạm min/max)** | **2,327** | **35.6%** | Listing price falls outside historical brand/model price envelope | Price warning displayed to buyers; recommendation to inspect vehicle documentation and physical condition. |
-| **High Outlier (Giá cao bất thường)** | **232** | **3.5%** | Severe positive residual ($Z_{\text{residual}} > 3.0$) | Potential customized vehicle, rare collector edition, or seller overpricing; requires manual specification verification. |
-| **Low Outlier (Giá thấp bất thường)** | **150** | **2.3%** | Severe negative residual ($Z_{\text{residual}} < -3.0$) | High risk of mechanical failure, salvage history, lack of legal ownership registration, or bait-and-switch advertising. |
+| **High Outlier (Giá cao bất thường)** | **232** | **3.5%** | Severe positive residual ($Z_{\mathrm{residual}} > 3.0$) | Potential customized vehicle, rare collector edition, or seller overpricing; requires manual specification verification. |
+| **Low Outlier (Giá thấp bất thường)** | **150** | **2.3%** | Severe negative residual ($Z_{\mathrm{residual}} < -3.0$) | High risk of mechanical failure, salvage history, lack of legal ownership registration, or bait-and-switch advertising. |
 
 This triage pipeline enables marketplace administrators to automate approvals for ~59% of listings while routing the remaining flagged cohorts to targeted moderation queues, protecting buyers without incurring manual review overhead across the entire catalogue.
 
@@ -416,14 +424,14 @@ $$R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}$$
 
 - **Mean Absolute Error (MAE)**: Measures average absolute prediction error in actual Vietnamese Đồng (VND), providing an intuitive, business-interpretable benchmark for buyers and sellers:
 
-$$\text{MAE} = \frac{1}{n} \sum_{i=1}^n |y_i - \hat{y}_i|$$
+$$\mathrm{MAE} = \frac{1}{n} \sum_{i=1}^n |y_i - \hat{y}_i|$$
 
 - **Root Mean Squared Error (RMSE)**: Penalizes large error outliers quadratically, critical for identifying catastrophic misvaluations on expensive vehicles:
 
-$$\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2}$$
+$$\mathrm{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2}$$
 
 > [!NOTE]
-> **RMSE Metric Technical Correction**: In Notebook Cell 108, `mean_squared_error` was computed without the square root transformation, returning an MSE value of $23,934,808,294,632\text{ VND}^2$. The true root mean squared error is $\sqrt{\text{MSE}} \approx \mathbf{4,892,321\text{ VND}}$. Earlier project documentation truncated the raw string to `"23,934,808"`.
+> **RMSE Metric Technical Correction**: In Notebook Cell 108, `mean_squared_error` was computed without the square root transformation, returning an MSE value of 23,934,808,294,632 $\text{VND}^2$. The true root mean squared error is $\sqrt{\mathrm{MSE}} \approx \mathbf{4,892,321\text{ VND}}$. Earlier project documentation truncated the raw string to `"23,934,808"`.
 
 The quantitative comparison across all candidate algorithms evaluated in the project notebook is summarized below:
 
@@ -443,7 +451,7 @@ The quantitative comparison across all candidate algorithms evaluated in the pro
 
 1. **Why Tree Ensembles Dominate**: Random Forest ($R^2 = 0.890$) and Gradient Boosting ($R^2 = 0.875$) achieve superior generalization because used motorcycle valuation is governed by hierarchical non-linear interactions (e.g., brand tier $\to$ displacement bracket $\to$ vehicle condition). Tree architectures segment feature space into local step-wise pricing zones without requiring restrictive linear assumptions.
 2. **Failure of Linear Hyperplanes (Ridge Regression)**: Ridge achieved only $R^2 = 0.260$ because linear models cannot resolve multiplicative cross-attribute dynamics (e.g., an extra year of age decreases a Ducati's value by tens of millions of VND, but reduces a Honda Wave's value by under one million VND).
-3. **LightGBM Overfitting on Sparse TF-IDF**: LightGBM's leaf-wise (best-first) tree expansion over-indexed on rare n-gram tokens across the 3,000-dimensional TF-IDF space, resulting in severe train-test performance divergence ($R^2_{\text{test}} = 0.285$). Random Forest's feature subsampling (`max_features='sqrt'`) prevented individual rare words from dominating tree splits.
+3. **LightGBM Overfitting on Sparse TF-IDF**: LightGBM's leaf-wise (best-first) tree expansion over-indexed on rare n-gram tokens across the 3,000-dimensional TF-IDF space, resulting in severe train-test performance divergence ($R^2_{\mathrm{test}} = 0.285$). Random Forest's feature subsampling (`max_features='sqrt'`) prevented individual rare words from dominating tree splits.
 
 ### Actual vs. Predicted Valuation Analysis
 
@@ -451,8 +459,8 @@ The quantitative comparison across all candidate algorithms evaluated in the pro
 
 The scatter plot of Actual Price ($y$) versus Predicted Price ($\hat{y}$) provides direct visual evidence of model calibration:
 - **Identity Diagonal Line ($y = x$)**: Represents perfect theoretical valuation.
-- **Commuter Concentration Zone ($10\text{M} - 40\text{M VND}$)**: The vast majority of data points tightly cluster along the $y = x$ diagonal, demonstrating that the model achieves exceptional precision on everyday commuter motorbikes where sample density is highest.
-- **High-Tier Dispersion ($> 50\text{M VND}$)**: Dispersion widens as prices approach the upper boundary. Premium motorcycles exhibit greater customization, individualized wear, and limited sample support, leading to wider variance in predictions.
+- **Commuter Concentration Zone (10M - 40M VND)**: The vast majority of data points tightly cluster along the $y = x$ diagonal, demonstrating that the model achieves exceptional precision on everyday commuter motorbikes where sample density is highest.
+- **High-Tier Dispersion (> 50M VND)**: Dispersion widens as prices approach the upper boundary. Premium motorcycles exhibit greater customization, individualized wear, and limited sample support, leading to wider variance in predictions.
 
 ### Residual Error Analysis & MAD Robustness
 
@@ -461,9 +469,9 @@ Residual errors are defined as $e_i = y_i - \hat{y}_i$:
 - **Heavy Tails & Kurtosis**: The residual distribution displays pronounced leptokurtosis (heavy tails) driven by listings with atypical mechanical modifications, urgent distress sales, or unrealistic asking prices.
 - **Connection to MAD Z-Score**: Standard parametric Z-scores relying on sample mean and standard deviation ($\sigma$) are easily distorted by extreme residual outliers. By utilizing the **Median Absolute Deviation (MAD)**:
 
-$$\text{MAD} = \text{median}(|e_i - \text{median}(e)|)$$
+$$\mathrm{MAD} = \mathrm{median}(|e_i - \mathrm{median}(e)|)$$
 
-The system computes a robust scale estimate $1.4826 \times \text{MAD}$ that remains completely stable even when up to $50\%$ of the data consists of extreme deviations. This mathematical property ensures that anomaly detection thresholds in Section 10 remain uncorrupted by outlier postings.
+The system computes a robust scale estimate $1.4826 \times \mathrm{MAD}$ that remains completely stable even when up to 50% of the data consists of extreme deviations. This mathematical property ensures that anomaly detection thresholds in Section 10 remain uncorrupted by outlier postings.
 
 ![Evaluation Metrics](images/eval_chart.png)
 
@@ -475,7 +483,7 @@ The evaluation learning curve demonstrates smooth, asymptotic loss reduction acr
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **Honda Air Blade 2018** | 25,000 km, Tay ga, 125cc | 28,000,000 VND | 27,150,000 VND | 850,000 VND | Normal (Accurate valuation) |
 | **Yamaha Exciter 2019** | 32,000 km, Tay côn, 150cc | 22,000,000 VND | 23,450,000 VND | 1,450,000 VND | Normal (Within standard confidence band) |
-| **Vespa Sprint 2021** | 12,000 km, Tay ga, 125cc | 68,000,000 VND | 52,300,000 VND | 15,700,000 VND | High Outlier ($Z_{\text{residual}} > 3.0$) |
+| **Vespa Sprint 2021** | 12,000 km, Tay ga, 125cc | 68,000,000 VND | 52,300,000 VND | 15,700,000 VND | High Outlier ($Z_{\mathrm{residual}} > 3.0$) |
 
 ---
 
